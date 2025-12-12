@@ -18,15 +18,14 @@ app.use(express.json());
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5000';
 const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
 
-// Apply CORS based on environment
 if (ALLOW_ALL_ORIGINS) {
   console.warn('WARNING: ALLOW_ALL_ORIGINS=true — CORS is wide open (dev only).');
-  app.use(cors());
-  app.options('*', cors());
+  app.use(cors()); // open CORS for debugging only
 } else {
-  app.use(cors({ origin: CLIENT_ORIGIN }));
-  app.options('*', cors({ origin: CLIENT_ORIGIN }));
+  // allow only the configured frontend origin; optionsSuccessStatus helps some older clients
+  app.use(cors({ origin: CLIENT_ORIGIN, optionsSuccessStatus: 200 }));
 }
+
 
 // ---------- HTTP + Socket.IO (create before using io) ----------
 const server = http.createServer(app);
