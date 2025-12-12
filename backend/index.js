@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json());
 
 // Deployment-friendly config
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5000';
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
 const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
 
 if (ALLOW_ALL_ORIGINS) {
