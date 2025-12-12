@@ -16,7 +16,44 @@ app.use(cors());
 app.use(express.json());
 
 // ---------- MONGODB CONNECT ----------
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/stockdash";
+// Set CORS correctly for deploy
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
+
+if (ALLOW_ALL_ORIGINS) {
+  console.warn('WARNING: ALLOW_ALL_ORIGINS=true — open CORS (dev only).');
+  app.use(cors());
+  app.options('*', cors());
+} else {
+  app.use(cors({ origin: CLIENT_ORIGIN }));
+  app.options('*', cors({ origin: CLIENT_ORIGIN }));
+}
+
+// ensure socket.io uses same origin setting
+io.origins((origin, callback) => {
+  if (ALLOW_ALL_ORIGINS) return callback(null, true);
+  if (!origin || origin === CLIENT_ORIGIN) return callback(null, true);
+  callback('Origin not allowed', false);
+});
+
+// START SERVER
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  // Print what the process is listening on (internal)
+  console.log(`Backend process listening on port ${PORT}`);
+
+  // Helpful message for humans: public URL to call (when deployed)
+  if (process.env.CLIENT_ORIGIN && process.env.CLIENT_ORIGIN.startsWith('http')) {
+    console.log(`Expected frontend origin (CLIENT_ORIGIN) = ${process.env.CLIENT_ORIGIN}`);
+    console.log(`Call API at: ${process.env.CLIENT_ORIGIN} -> requests should target ${process.env.CLIENT_ORIGIN}`);
+  } else if (process.env.RENDER_EXTERNAL_URL) {
+    // Render may set an env for external URL — if present show it
+    console.log(`Public Render URL (from env): ${process.env.RENDER_EXTERNAL_URL}`);
+  } else {
+    console.log('When deployed, the public URL will be your Render service URL (check Render dashboard).');
+  }
+});
+
 // connect without legacy options — modern mongoose does not need them
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected"))
