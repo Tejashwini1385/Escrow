@@ -1,0 +1,30 @@
+.nb-root {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 2px solid #eef2f6;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  height: 100px;         /* set any height you want */  /* keeps content vertically centered */
+}
+
+.nb-inner {
+  max-width: 3000px;
+  margin: 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 30px;
+  gap:12px;
+}
+.nb-left { display:flex; align-items:center; gap:12px; }
+.nb-logo { width:60px; height:60px; border-radius:8px; background:#0b1724; object-fit:cover; }
+.nb-name { font-weight:800; color:#0b1724; }
+.nb-tag { font-size:12px; color:#64748b; }
+.nb-links { display:flex; gap:12px; align-items:center; }
+.nb-link { background:transparent; border:none; color:#334155; cursor:pointer; padding:6px 10px; border-radius:6px; }
+.nb-actions { display:flex; gap:10px; align-items:center; }
+.nb-user { color:#0b1724; font-weight:700; padding:6px 10px; }
+.nb-btn { padding:8px 12px; border-radius:8px; cursor:pointer; border:1px solid transparent; font-weight:700; }
+.nb-btn-outline { background:transparent; border:1px solid #e6eef6; color:#0b1724; }
+.nb-btn-primary { background:#ff7b00; color:white; border-radius:8px; border:none; }
