@@ -328,41 +328,10 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setTab(initialTab || "login");
   }, [initialTab]);
-
-  const emailTrimmed = email.trim();
-  const showGmailSuggestion = emailTrimmed.length > 0 && !emailTrimmed.includes("@");
-  function applyGmailSuggestion() {
-    setEmail(`${emailTrimmed}@gmail.com`);
-  }
-
-  function scorePassword(pw) {
-    if (!pw) return 0;
-    let score = 0;
-    if (pw.length >= 8) score += 2;
-    else if (pw.length >= 5) score += 1;
-    if (/[a-z]/.test(pw)) score += 1;
-    if (/[A-Z]/.test(pw)) score += 1;
-    if (/[0-9]/.test(pw)) score += 1;
-    if (/[^A-Za-z0-9]/.test(pw)) score += 1;
-    return Math.min(Math.max(score, 0), 6);
-  }
-  function labelForScore(s) {
-    if (s <= 2) return "Weak";
-    if (s <= 4) return "Medium";
-    return "Strong";
-  }
-
-  const pwScore = scorePassword(password);
-  const pwLabel = labelForScore(pwScore);
-  const pwPercent = Math.round((pwScore / 6) * 100);
-
-  const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed);
-  const signupPwTooShort = password.length > 0 && password.length < 6;
 
   // LOGIN ONLY
   async function doLocalLogin(userObj) {
@@ -370,14 +339,15 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     try {
       socket.connect();
       socket.emit("join", { email: userObj.email });
-    } catch (e) {}
-    onLogin && onLogin(userObj);
-    onClose && onClose();
+    } catch {}
+    onLogin?.(userObj);
+    onClose?.();
   }
 
   async function handleLogin(e) {
-    e?.preventDefault();
+    e.preventDefault();
     if (!email || !password) return alert("Enter email & password");
+
     setLoading(true);
     try {
       const res = await fetch(apiUrl("/api/auth/login"), {
@@ -385,11 +355,11 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Login failed");
 
-      const user = { id: json.id || json._id || json.userId, email };
-      doLocalLogin(user);
+      doLocalLogin({ id: json.id || json._id, email });
     } catch (err) {
       console.error(err);
       alert("Network error");
@@ -399,7 +369,7 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   }
 
   async function handleSignup(e) {
-    e?.preventDefault();
+    e.preventDefault();
     if (!email || !password) return alert("Missing fields");
     if (password.length < 6) return alert("Password must be at least 6 characters");
     if (password !== confirm) return alert("Passwords do not match");
@@ -411,10 +381,11 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Register failed");
 
-      // ✅ NO AUTO LOGIN HERE
+      // 🚫 NO AUTO LOGIN
       alert("Account created successfully. Please login.");
       setTab("login");
       setPassword("");
@@ -427,38 +398,75 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     }
   }
 
-  function handleSignupKeyDown(e) {
-    if (e.key === "Enter" && signupPwTooShort) {
-      e.preventDefault();
-    }
-  }
-
   return (
-    <div className="auth-backdrop" onMouseDown={onClose}>
-      <div className="auth-modal" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="auth-backdrop" onClick={onClose}>
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         <button className="auth-close" onClick={onClose}>✕</button>
 
         <div className="auth-tabs">
-          <button className={`auth-tab ${tab === "login" ? "active" : ""}`} onClick={() => setTab("login")}>Login</button>
-          <button className={`auth-tab ${tab === "signup" ? "active" : ""}`} onClick={() => setTab("signup")}>Sign Up</button>
+          <button
+            className={`auth-tab ${tab === "login" ? "active" : ""}`}
+            onClick={() => setTab("login")}
+          >
+            Login
+          </button>
+          <button
+            className={`auth-tab ${tab === "signup" ? "active" : ""}`}
+            onClick={() => setTab("signup")}
+          >
+            Sign Up
+          </button>
         </div>
 
         {tab === "login" ? (
-          <form onSubmit={handleLogin}>
-            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" />
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" />
-            <button type="submit" disabled={loading}>Login</button>
+          <form className="auth-form" onSubmit={handleLogin}>
+            <input
+              className="auth-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+            />
+            <input
+              className="auth-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <button className="auth-cta" type="submit" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </button>
           </form>
         ) : (
-          <form onSubmit={handleSignup} onKeyDown={handleSignupKeyDown}>
-            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" />
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" />
-            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirm Password" />
-            <button type="submit" disabled={loading || signupPwTooShort}>Create account</button>
+          <form className="auth-form" onSubmit={handleSignup}>
+            <input
+              className="auth-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+            />
+            <input
+              className="auth-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+            <input
+              className="auth-input"
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Confirm Password"
+            />
+            <button className="auth-cta" type="submit" disabled={loading}>
+              {loading ? "Creating..." : "Create account"}
+            </button>
           </form>
         )}
       </div>
     </div>
   );
 }
+
 
