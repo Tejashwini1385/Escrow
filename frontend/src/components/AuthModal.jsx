@@ -71,11 +71,7 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Login failed");
       const user = { id: json.id || json._id || json.userId, email };
-      // doLocalLogin(user);
-    alert("Account created successfully. Please login.");
-    setTab("login");
-    setPassword("");
-    setConfirm("");
+     doLocalLogin(user);
     } catch (err) {
       console.error(err);
       alert("Network error");
