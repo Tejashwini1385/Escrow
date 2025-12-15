@@ -401,15 +401,12 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   }
 
   return (
-    <div className="auth-backdrop" onClick={onClose}>
-      <div
-        className="auth-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="auth-close" onClick={onClose}>
-          ✕
-        </button>
+  <div className="auth-backdrop" onClick={onClose}>
+    <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+      <button className="auth-close" onClick={onClose}>✕</button>
 
+      {/* TOP */}
+      <div className="auth-top">
         <div className="auth-tabs">
           <button
             className={`auth-tab ${tab === "login" ? "active" : ""}`}
@@ -424,63 +421,67 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
             Sign Up
           </button>
         </div>
+      </div>
 
-        {tab === "login" ? (
-          <form className="auth-form" onSubmit={handleLogin}>
-            <input
-              className="auth-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-            />
-            <input
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-            <button
-              className="auth-cta"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-        ) : (
-          <form className="auth-form" onSubmit={handleSignup}>
-            <input
-              className="auth-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-            />
-            <input
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-            />
-            <input
-              className="auth-input"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Confirm Password"
-            />
-            <button
-              className="auth-cta"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Creating..." : "Create account"}
-            </button>
-          </form>
-        )}
+      {/* BODY */}
+      <div className="auth-body">
+        <div className="auth-header">
+          <h3 className="auth-title">
+            {tab === "login" ? "Login" : "Create Account"}
+          </h3>
+        </div>
+
+        <div className="auth-scroll-area">
+          {tab === "login" ? (
+            <form className="auth-form" onSubmit={handleLogin}>
+              <input
+                className="auth-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+              />
+              <input
+                className="auth-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+              />
+              <button className="auth-cta" type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </form>
+          ) : (
+            <form className="auth-form" onSubmit={handleSignup}>
+              <input
+                className="auth-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+              />
+              <input
+                className="auth-input"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+              />
+              <input
+                className="auth-input"
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="Confirm Password"
+              />
+              <button className="auth-cta" type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Create account"}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
-  );
-}
+  </div>
+);
+
 
