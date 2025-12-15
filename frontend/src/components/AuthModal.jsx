@@ -320,7 +320,10 @@ import { apiUrl } from "../services/api";
 import { socket } from "../socket";
 
 /**
- * AuthModal.jsx — signup DOES NOT auto-login
+ * AuthModal.jsx
+ * ✔ Signup does NOT auto-login
+ * ✔ No localStorage handling here
+ * ✔ Parent controls auth state
  */
 export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   const [tab, setTab] = useState(initialTab);
@@ -334,16 +337,6 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   }, [initialTab]);
 
   // LOGIN ONLY
-  async function doLocalLogin(userObj) {
-    localStorage.setItem("user", JSON.stringify(userObj));
-    try {
-      socket.connect();
-      socket.emit("join", { email: userObj.email });
-    } catch {}
-    onLogin?.(userObj);
-    onClose?.();
-  }
-
   async function handleLogin(e) {
     e.preventDefault();
     if (!email || !password) return alert("Enter email & password");
@@ -359,7 +352,17 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Login failed");
 
-      doLocalLogin({ id: json.id || json._id, email });
+      const user = { id: json.id || json._id, email };
+
+      // socket join (optional)
+      try {
+        socket.connect();
+        socket.emit("join", { email });
+      } catch {}
+
+      // 🔑 Parent decides what to do with user
+      onLogin?.(user);
+      onClose?.();
     } catch (err) {
       console.error(err);
       alert("Network error");
@@ -368,6 +371,7 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     }
   }
 
+  // SIGNUP ONLY (NO LOGIN)
   async function handleSignup(e) {
     e.preventDefault();
     if (!email || !password) return alert("Missing fields");
@@ -385,8 +389,9 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Register failed");
 
-      // 🚫 NO AUTO LOGIN
       alert("Account created successfully. Please login.");
+
+      // 🔁 Switch to login tab
       setTab("login");
       setPassword("");
       setConfirm("");
@@ -468,5 +473,4 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     </div>
   );
 }
-
 
