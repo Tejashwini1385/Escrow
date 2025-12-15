@@ -176,8 +176,7 @@ export default function App() {
   setShowAuth(true);
 }
 
-
-  return (
+return (
     <>
       <NavBar
         user={user}
