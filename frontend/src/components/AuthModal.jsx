@@ -320,10 +320,7 @@ import { apiUrl } from "../services/api";
 import { socket } from "../socket";
 
 /**
- * AuthModal.jsx
- * ✔ Signup does NOT auto-login
- * ✔ No localStorage handling here
- * ✔ Parent controls auth state
+ * AuthModal.jsx — signup DOES NOT auto-login
  */
 export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   const [tab, setTab] = useState(initialTab);
@@ -337,6 +334,16 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
   }, [initialTab]);
 
   // LOGIN ONLY
+  async function doLocalLogin(userObj) {
+    localStorage.setItem("user", JSON.stringify(userObj));
+    try {
+      socket.connect();
+      socket.emit("join", { email: userObj.email });
+    } catch {}
+    onLogin?.(userObj);
+    onClose?.();
+  }
+
   async function handleLogin(e) {
     e.preventDefault();
     if (!email || !password) return alert("Enter email & password");
@@ -352,17 +359,7 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Login failed");
 
-      const user = { id: json.id || json._id, email };
-
-      // socket join (optional)
-      try {
-        socket.connect();
-        socket.emit("join", { email });
-      } catch {}
-
-      // 🔑 Parent decides what to do with user
-      onLogin?.(user);
-      onClose?.();
+      doLocalLogin({ id: json.id || json._id, email });
     } catch (err) {
       console.error(err);
       alert("Network error");
@@ -371,12 +368,13 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     }
   }
 
-  // SIGNUP ONLY (NO LOGIN)
   async function handleSignup(e) {
     e.preventDefault();
     if (!email || !password) return alert("Missing fields");
-    if (password.length < 6) return alert("Password must be at least 6 characters");
-    if (password !== confirm) return alert("Passwords do not match");
+    if (password.length < 6)
+      return alert("Password must be at least 6 characters");
+    if (password !== confirm)
+      return alert("Passwords do not match");
 
     setLoading(true);
     try {
@@ -389,9 +387,8 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Register failed");
 
+      // 🚫 NO AUTO LOGIN
       alert("Account created successfully. Please login.");
-
-      // 🔁 Switch to login tab
       setTab("login");
       setPassword("");
       setConfirm("");
@@ -405,8 +402,13 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
 
   return (
     <div className="auth-backdrop" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="auth-close" onClick={onClose}>✕</button>
+      <div
+        className="auth-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="auth-close" onClick={onClose}>
+          ✕
+        </button>
 
         <div className="auth-tabs">
           <button
@@ -438,7 +440,11 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
             />
-            <button className="auth-cta" type="submit" disabled={loading}>
+            <button
+              className="auth-cta"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
@@ -464,7 +470,11 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Confirm Password"
             />
-            <button className="auth-cta" type="submit" disabled={loading}>
+            <button
+              className="auth-cta"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? "Creating..." : "Create account"}
             </button>
           </form>
