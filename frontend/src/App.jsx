@@ -147,7 +147,7 @@
 //     </>
 //   );
 // }
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import NavBar from "./components/NavBar";
 import AuthModal from "./components/AuthModal";
 import Home from "./components/Home";
@@ -158,37 +158,21 @@ import "./global.css";
 export default function App() {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [authInitialTab, setAuthInitialTab] = useState("login");  // <-- NEW
+  const [authInitialTab, setAuthInitialTab] = useState("login");
   const [showFAQ, setShowFAQ] = useState(false);
 
-  // Load user from localStorage on refresh
-  useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (raw) {
-      try {
-        const u = JSON.parse(raw);
-        setUser(u);
-
-        try {
-          socket.connect();
-          socket.emit("join", { email: u.email });
-        } catch {}
-      } catch {
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
-
-  // Logout
+  // LOGOUT
   function handleLogout() {
     localStorage.removeItem("user");
-    try { socket.disconnect(); } catch {}
+    try {
+      socket.disconnect();
+    } catch {}
     setUser(null);
   }
 
-  // OPEN AUTH MODAL on a specific tab ("login" or "signup")
+  // OPEN AUTH MODAL
   function handleShowAuth(tab = "login") {
-    setAuthInitialTab(tab);  // <-- set correct tab
+    setAuthInitialTab(tab);
     setShowAuth(true);
   }
 
@@ -196,14 +180,10 @@ export default function App() {
     <>
       <NavBar
         user={user}
-
-        // NavBar will pass "login" or "signup"
         onShowLogin={(tab) => handleShowAuth(tab)}
         onShowRegister={(tab) => handleShowAuth(tab)}
-
         onShowFAQ={() => setShowFAQ(true)}
         onLogout={handleLogout}
-
         brand="Stock Broker Client"
         showRegisterOnHome={!user}
       />
@@ -218,9 +198,11 @@ export default function App() {
       {/* AUTH MODAL */}
       {showAuth && (
         <AuthModal
-          initialTab={authInitialTab}          // <-- tells modal which tab to open
+          initialTab={authInitialTab}
           onClose={() => setShowAuth(false)}
           onLogin={(u) => {
+            // ✅ store ONLY after successful login
+            localStorage.setItem("user", JSON.stringify(u));
             setUser(u);
             setShowAuth(false);
           }}
