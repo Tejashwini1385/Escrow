@@ -172,12 +172,6 @@ export default function App() {
 
   // OPEN AUTH MODAL
   function handleShowAuth(tab = "login") {
-  if (tab === "signup") {
-    // 🔥 force logout before signup
-    localStorage.removeItem("user");
-    setUser(null);
-    try { socket.disconnect(); } catch {}
-  }
   setAuthInitialTab(tab);
   setShowAuth(true);
 }
