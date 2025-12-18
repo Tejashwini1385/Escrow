@@ -1,124 +1,285 @@
+// // backend/index.js
+// require("dotenv").config();
+
+// const express = require("express");
+// const http = require("http");
+// const cors = require("cors");
+// const path = require("path");
+// const fs = require("fs");
+// const mongoose = require("mongoose");
+// const { Server } = require("socket.io");
+
+// const { generateRandomPrice } = require("./priceGenerator");
+
+// // ================= APP SETUP =================
+// const app = express();
+// app.use(express.json());
+
+// // ================= CORS CONFIG =================
+// const CLIENT_ORIGIN =
+//   process.env.CLIENT_ORIGIN || "http://localhost:5173";
+// const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === "true";
+
+// if (ALLOW_ALL_ORIGINS) {
+//   console.warn("⚠️ ALLOW_ALL_ORIGINS enabled (dev only)");
+//   app.use(cors());
+// } else {
+//   app.use(
+//     cors({
+//       origin: CLIENT_ORIGIN,
+//       credentials: true,
+//       optionsSuccessStatus: 200,
+//     })
+//   );
+// }
+
+// // ================= HTTP + SOCKET =================
+// const server = http.createServer(app);
+
+// const io = new Server(server, {
+//   cors: {
+//     origin: ALLOW_ALL_ORIGINS ? "*" : CLIENT_ORIGIN,
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+// // ================= DATABASE =================
+// const MONGO_URI =
+//   process.env.MONGO_URI ||
+//   process.env.MONGODB_URI ||
+//   "mongodb://localhost:27017/stockdash";
+
+// mongoose
+//   .connect(MONGO_URI)
+//   .then(() => console.log("✅ MongoDB connected"))
+//   .catch((err) => console.error("❌ MongoDB error:", err));
+
+// // ================= ROUTES =================
+// const authRoutes = require("./routes/auth");
+// const subscriptionRoutes = require("./routes/subscriptions");
+// const tradeRoutes = require("./routes/trade");
+
+// app.use("/api/auth", authRoutes);
+// app.use("/api/subscriptions", subscriptionRoutes);
+// app.use("/api/trade", tradeRoutes);
+
+// // ================= HEALTH =================
+// app.get("/", (req, res) => {
+//   res.send("Stock Trading Backend is running ✅");
+// });
+
+// // ================= SOCKET PRICE ENGINE =================
+// const STOCKS = ["GOOG", "TSLA", "AMZN", "META", "NVDA"];
+
+// // Live prices (realistic base)
+// let prices = {};
+// STOCKS.forEach((ticker) => {
+//   prices[ticker] = generateRandomPrice(ticker);
+// });
+
+// // Connected users (for stats)
+// const connectedUsers = new Map();
+
+// function broadcastUserCount() {
+//   io.emit("user-count", { count: connectedUsers.size });
+// }
+
+// io.on("connection", (socket) => {
+//   console.log("🔌 Socket connected:", socket.id);
+
+//   socket.on("join", ({ email }) => {
+//     connectedUsers.set(socket.id, email || "unknown");
+//     broadcastUserCount();
+
+//     // Send current prices immediately
+//     socket.emit("initial-prices", { prices });
+//     console.log(`👤 Joined: ${email}`);
+//   });
+
+//   socket.on("disconnect", () => {
+//     connectedUsers.delete(socket.id);
+//     broadcastUserCount();
+//     console.log("❌ Socket disconnected:", socket.id);
+//   });
+// });
+
+// // ================= PRICE TICK (GLOBAL MARKET) =================
+// setInterval(() => {
+//   STOCKS.forEach((ticker) => {
+//     const newPrice = generateRandomPrice(ticker);
+//     prices[ticker] = newPrice;
+
+//     io.emit("price-update", {
+//       ticker,
+//       price: newPrice,
+//       time: Date.now(),
+//     });
+//   });
+// }, 1000); // 1 second tick like real market feed
+
+// // ================= FRONTEND STATIC SERVE =================
+// const possibleBuilds = [
+//   path.join(__dirname, "..", "frontend", "dist"),  // Vite
+//   path.join(__dirname, "..", "frontend", "build"), // CRA
+// ];
+
+// let buildPath = null;
+// for (const p of possibleBuilds) {
+//   if (fs.existsSync(p)) {
+//     buildPath = p;
+//     break;
+//   }
+// }
+
+// if (buildPath) {
+//   console.log("📦 Serving frontend from:", buildPath);
+//   app.use(express.static(buildPath));
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(buildPath, "index.html"));
+//   });
+// } else {
+//   console.log("ℹ️ No frontend build found (API-only mode)");
+// }
+
+// // ================= START SERVER =================
+// const PORT = process.env.PORT || 5000;
+
+// server.listen(PORT, () => {
+//   console.log(`🚀 Backend running on port ${PORT}`);
+//   console.log(`🌍 CLIENT_ORIGIN = ${CLIENT_ORIGIN}`);
+// });
 // backend/index.js
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-const mongoose = require('mongoose');
-const { Server } = require('socket.io');
+require("dotenv").config();
 
-const { generateRandomPrice } = require('./priceGenerator'); // ensure this file exists
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
+const mongoose = require("mongoose");
+const { Server } = require("socket.io");
 
-// ---------- APP + CONFIG ----------
+const { generateRandomPrice } = require("./priceGenerator");
+
+// ================= APP SETUP =================
 const app = express();
 app.use(express.json());
 
-// Deployment-friendly config
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
-const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
+// ================= CORS CONFIG =================
+// Local dev → http://localhost:5173
+// Render prod → https://your-frontend.onrender.com
+const CLIENT_ORIGIN =
+  process.env.CLIENT_ORIGIN || "http://localhost:5173";
+
+// Render-friendly toggle
+const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === "true";
 
 if (ALLOW_ALL_ORIGINS) {
-  console.warn('WARNING: ALLOW_ALL_ORIGINS=true — CORS is wide open (dev only).');
-  app.use(cors()); // open CORS for debugging only
+  console.warn("⚠️ ALLOW_ALL_ORIGINS enabled");
+  app.use(cors({ origin: "*" }));
 } else {
-  // allow only the configured frontend origin; optionsSuccessStatus helps some older clients
-  app.use(cors({ origin: CLIENT_ORIGIN, optionsSuccessStatus: 200 }));
+  app.use(
+    cors({
+      origin: CLIENT_ORIGIN,
+      credentials: true,
+    })
+  );
 }
 
-
-// ---------- HTTP + Socket.IO (create before using io) ----------
+// ================= HTTP + SOCKET =================
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: ALLOW_ALL_ORIGINS ? '*' : CLIENT_ORIGIN,
-    methods: ['GET', 'POST'],
+    origin: ALLOW_ALL_ORIGINS ? "*" : CLIENT_ORIGIN,
+    methods: ["GET", "POST"],
   },
 });
 
-// ---------- MONGODB CONNECT ----------
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/stockdash';
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
+// ================= DATABASE =================
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  process.env.MONGODB_URI ||
+  "mongodb://localhost:27017/stockdash";
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
-    console.error('MongoDB connect error:', err);
-    // for production you might not want to exit; uncomment to fail fast:
-    // process.exit(1);
+    console.error("❌ MongoDB error:", err);
+    process.exit(1); // stop server if DB fails
   });
 
-// ---------- ROUTES ----------
-try {
-  const authRoutes = require('./routes/auth'); // ensure this exports a router
-  const subsRoutes = require('./routes/subscriptions');
-  app.use('/api/auth', authRoutes);
-  app.use('/api/subscriptions', subsRoutes);
-} catch (err) {
-  console.warn('Warning: could not mount routes (check routes folder).', err.message);
-}
+// ================= ROUTES =================
+const authRoutes = require("./routes/auth");
+const subscriptionRoutes = require("./routes/subscriptions");
+const tradeRoutes = require("./routes/trade");
 
-// Health
-app.get('/', (req, res) => res.send('Stock Dashboard backend is running ✅'));
+app.use("/api/auth", authRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/trade", tradeRoutes);
 
-// ---------- SOCKETS & PRICE LOGIC ----------
-const STOCKS = ['GOOG', 'TSLA', 'AMZN', 'META', 'NVDA'];
+// ================= HEALTH =================
+app.get("/", (req, res) => {
+  res.send("Stock Trading Backend is running ✅");
+});
+
+// ================= SOCKET PRICE ENGINE =================
+const STOCKS = ["GOOG", "TSLA", "AMZN", "META", "NVDA"];
+
+// Live prices
 let prices = {};
-STOCKS.forEach((t) => (prices[t] = generateRandomPrice()));
+STOCKS.forEach((ticker) => {
+  prices[ticker] = generateRandomPrice(ticker);
+});
 
+// Connected users
 const connectedUsers = new Map();
+
 function broadcastUserCount() {
-  io.emit('user-count', { count: connectedUsers.size });
+  io.emit("user-count", { count: connectedUsers.size });
 }
 
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+io.on("connection", (socket) => {
+  console.log("🔌 Socket connected:", socket.id);
 
-  socket.on('join', (data) => {
-    const email = data?.email || 'unknown';
-    connectedUsers.set(socket.id, email);
-    console.log(`User logged in: ${email} (socket ${socket.id})`);
+  socket.on("join", ({ email }) => {
+    connectedUsers.set(socket.id, email || "unknown");
     broadcastUserCount();
-    socket.emit('initial-prices', { prices });
+
+    socket.emit("initial-prices", { prices });
+    console.log(`👤 Joined: ${email}`);
   });
 
-  socket.on('subscribe', (ticker) => {
-    if (!STOCKS.includes(ticker)) {
-      console.warn(`Subscribe request for unknown ticker: ${ticker} by ${socket.id}`);
-      return;
-    }
-    console.log(`Subscribed: ${ticker} (socket ${socket.id})`);
-    socket.join(ticker);
-    socket.emit('price-update', { ticker, price: prices[ticker] });
-  });
-
-  socket.on('unsubscribe', (ticker) => {
-    console.log(`Unsubscribed: ${ticker} (socket ${socket.id})`);
-    socket.leave(ticker);
-  });
-
-  socket.on('disconnect', () => {
-    const email = connectedUsers.get(socket.id) || 'unknown';
+  socket.on("disconnect", () => {
     connectedUsers.delete(socket.id);
-    console.log(`User disconnected: ${socket.id} (${email})`);
     broadcastUserCount();
+    console.log("❌ Socket disconnected:", socket.id);
   });
 });
 
-// price emit every second
+// ================= PRICE TICK =================
 setInterval(() => {
   STOCKS.forEach((ticker) => {
-    prices[ticker] = generateRandomPrice();
-    io.to(ticker).emit('price-update', { ticker, price: prices[ticker] });
+    const newPrice = generateRandomPrice(ticker);
+    prices[ticker] = newPrice;
+
+    io.emit("price-update", {
+      ticker,
+      price: newPrice,
+      time: Date.now(),
+    });
   });
 }, 1000);
 
-// ---------- STATIC FRONTEND SERVE (if build exists) ----------
-const checkPaths = [
-  path.join(__dirname, '..', 'frontend', 'dist'),  // Vite / some bundlers
-  path.join(__dirname, '..', 'frontend', 'build'), // CRA
+// ================= FRONTEND STATIC SERVE =================
+const possibleBuilds = [
+  path.join(__dirname, "..", "frontend", "dist"),  // Vite
+  path.join(__dirname, "..", "frontend", "build"), // CRA
 ];
 
 let buildPath = null;
-for (const p of checkPaths) {
+for (const p of possibleBuilds) {
   if (fs.existsSync(p)) {
     buildPath = p;
     break;
@@ -126,23 +287,20 @@ for (const p of checkPaths) {
 }
 
 if (buildPath) {
-  console.log('Serving frontend from', buildPath);
+  console.log("📦 Serving frontend from:", buildPath);
   app.use(express.static(buildPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(buildPath, 'index.html'));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
-  console.log('No frontend build found — skipping static serve.');
+  console.log("ℹ️ No frontend build found (API-only mode)");
 }
 
-// ---------- START SERVER ----------
+// ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
-  console.log(`Backend process listening on port ${PORT}`);
-  console.log(`CLIENT_ORIGIN = ${CLIENT_ORIGIN}`);
-  if (process.env.RENDER_EXTERNAL_URL) {
-    console.log(`Render public URL (env): ${process.env.RENDER_EXTERNAL_URL}`);
-  } else {
-    console.log('Public URL when deployed: check your Render service URL in the Render dashboard.');
-  }
+  console.log(`🚀 Backend running on port ${PORT}`);
+  console.log(`🌍 CLIENT_ORIGIN = ${CLIENT_ORIGIN}`);
 });
