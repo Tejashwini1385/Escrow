@@ -64,10 +64,16 @@ export default function AuthModal({ initialTab = "login", onClose, onLogin }) {
     setLoading(true);
     try {
       const res = await fetch(apiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    email,
+    password,
+  }),
+});
+
       const json = await res.json();
       if (!res.ok) return alert(json.error || "Login failed");
       const user = { id: json.id || json._id || json.userId, email };
