@@ -1,118 +1,281 @@
-
-
-/* container */
-.db-root {
-  max-width: 1200px;
-  margin: 28px auto;
-  padding: 22px;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color: #0b1724;
+.dashboard-root {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: Inter, system-ui;
 }
 
-/* header */
-.db-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; gap:12px; }
-.db-left h2 { margin:0; font-size:20px; font-weight:800; }
-.db-email { color:#1573ff; font-weight:700; }
-.db-meta { color:#64748b; font-size:13px; margin-top:4px; }
-.db-logout { background:#ff7b00; border:none; color:#fff; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; box-shadow: 0 6px 18px rgba(255,123,0,0.18); }
+/* ===== WALLET BAR ===== */
+.wallet-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
 
-/* grid - force two rows: prefer 3 columns so for 5 items you get 3 + 2 */
-.db-stock-grid.two-rows {
+.deposit-btn {
+  background: #2563eb;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+.withdraw-btn {
+  background: #7c3aed;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* ===== GRID ===== */
+.stock-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 18px;
-  margin-top: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
-/* if less width (mobile), fallback to single column */
-@media (max-width: 880px) {
-  .db-stock-grid.two-rows { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 560px) {
-  .db-stock-grid.two-rows { grid-template-columns: 1fr; }
-}
-
-/* card */
 .stock-card {
-  position: relative;
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  background: white;
   padding: 16px;
   border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+
+.stock-head {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
-  min-height: 150px;
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-  border: 1px solid rgba(15,23,42,0.04);
 }
-.stock-card:hover { transform: translateY(-6px); box-shadow: 0 18px 50px rgba(2,6,23,0.09); }
 
-/* triangle decoration top-right */
-.card-triangle {
+.price {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.up { color: #16a34a; }
+.down { color: #dc2626; }
+
+.line-graph {
+  width: 100%;
+  height: 80px;
+  margin: 10px 0;
+}
+
+.no-data {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.body {
   position: absolute;
-  right: 0;
-  top: 0;
-  width: 0;
-  height: 0;
-  border-left: 54px solid transparent;
-  border-bottom: 54px solid rgba(21,115,255,0.06);
-  border-top-right-radius: 12px;
-  pointer-events: none;
+  width: 100%;
+  border-radius: 2px;
 }
 
-/* subscribed accent */
-.stock-card.subbed {
-  border: 2px solid rgba(21,115,255,0.12);
+.body.green {
+  background: #22c55e;
 }
 
-/* header inside card */
-.stock-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-.ticker { font-weight:900; color:#0b1724; font-size:18px; letter-spacing:0.6px; }
-.price { font-weight:800; font-size:20px; color:#0b1724; margin-top:6px; }
-.price-meta { color:#64748b; font-size:13px; margin-top:6px; }
-
-/* actions stack on right */
-.stock-actions-vert { display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
-
-/* big buttons */
-.stock-actions { display:flex; gap:8px; align-items:center; }
-.btn-sub {
-  background:#1573ff; color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
-  box-shadow: 0 8px 20px rgba(21,115,255,0.12);
-}
-.btn-unsub {
-  background:#fff; color:#ef4444; border:1px solid #ff4d4f; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+.body.red {
+  background: #ef4444;
 }
 
-/* subscription details row */
-.sub-details { display:flex; gap:8px; align-items:center; }
-.sub-amt { background:#f1f5f9; padding:6px 10px; border-radius:8px; font-weight:700; color:#0b1724; }
-.btn-share {
-  background:#06b6d4; color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:700;
-  box-shadow: 0 8px 18px rgba(6,182,212,0.12);
+.no-data {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
 }
 
-/* price flash animations */
-.price-up { animation: priceUpFlash .9s ease; color:#16a34a !important; }
-.price-down { animation: priceDownFlash .9s ease; color:#ef4444 !important; }
-@keyframes priceUpFlash {
-  0% { transform: translateY(-6px) scale(1.03); filter: drop-shadow(0 8px 18px rgba(22,163,74,0.08)); }
-  50% { transform: translateY(0) scale(1.01); }
-  100% { transform: none; }
-}
-@keyframes priceDownFlash {
-  0% { transform: translateY(-6px) scale(1.03); filter: drop-shadow(0 8px 18px rgba(239,68,68,0.06)); }
-  50% { transform: translateY(0) scale(1.01); }
-  100% { transform: none; }
+/* ===== ACTIONS ===== */
+.watch-btn {
+  width: 100%;
+  background: #0f172a;
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
 }
 
-/* footer */
-.db-footer { margin-top:34px; color:#64748b; font-size:13px; text-align:center; padding:18px 0; }
-
-/* responsive extra: keep sub-details stacked on very small screens */
-@media (max-width:420px) {
-  .stock-head { flex-direction: column; align-items:flex-start; gap:12px; }
-  .stock-actions-vert { align-items:flex-start; }
+.trade-actions {
+  display: flex;
+  gap: 8px;
 }
+
+.buy-btn {
+  flex: 1;
+  background: #2563eb;
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+}
+
+.sell-btn {
+  flex: 1;
+  background: #f59e0b;
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* ===== MODAL ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+}
+
+.modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+}
+
+.cancel-btn {
+  width: 100%;
+  background: #64748b;
+  color: white;
+  padding: 6px;
+  border: none;
+  margin-top: 8px;
+}
+/* ACTIVE TRADES CONTAINER */
+.active-trades {
+  margin: 20px 0;
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.active-trades h4 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.active-trades ul {
+  list-style: none;
+  padding: 12px 12px;
+  margin: 0;
+}
+
+.active-trade-item {
+  /* display: flex; */
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* TEXT */
+.active-trade-item span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ✅ SMALL SELL BUTTON */
+.active-trade-item .sell-btn {
+  display: inline-flex;
+  align-items: center;
+  /* justify-content: center; */
+
+  /* 🔑 REMOVE WIDTH */
+  /* width: 20%; ❌ REMOVE */
+
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 6px 14px;     /* controls size */
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.active-trade-item .sell-btn:hover {
+  background: #d97706;
+}
+
+.active-trade-item .sell-btn:active {
+  transform: scale(0.95);
+}
+/* ===== WALLET BAR BUTTON FIX ===== */
+.wallet-bar button {
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  appearance: none;
+}
+
+.wallet-bar .deposit-btn {
+  background: #2563eb;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+
+.wallet-bar .deposit-btn:hover {
+  background: #1d4ed8;
+}
+
+.wallet-bar .withdraw-btn {
+  background: #7c3aed;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+}
+
+.wallet-bar .withdraw-btn:hover {
+  background: #6d28d9;
+}
+/* ===== MODAL ACTIONS ===== */
+/* ===== MODAL BUTTONS ===== */
+.modal button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;   /* space between buttons */
+}
+
+/* Deposit / Withdraw button (first button) */
+.modal button:first-of-type {
+  background: #2563eb;
+  color: white;
+}
+
+.modal button:first-of-type:hover {
+  background: #1d4ed8;
+}
+
+/* Cancel button */
+.modal button:last-of-type {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.modal button:last-of-type:hover {
+  background: #d1d5db;
+}
+
